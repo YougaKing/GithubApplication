@@ -1,6 +1,6 @@
-## 题目：Github 用户搜索**
+###### 题目：Github 用户搜索**
 
-#### Github 提供了获取用户数据的RESTful API：
+###### Github 提供了获取用户数据的RESTful API：
 
 1. 查询用户：https://api.github.com/search/users?q=test
 
@@ -20,3 +20,35 @@
 不包含无用代码，可以使用github上的开源代码
 * 代码必须使用github托管
 * 请使用Android Studio开发
+
+# Github Application
+
+### 项目所用开源库
+
+        compile 'com.github.bumptech.glide:glide:3.7.0'
+        compile 'com.android.support:appcompat-v7:25.2.0'
+        compile 'com.jakewharton:butterknife:8.5.1'
+        compile 'io.reactivex.rxjava2:rxjava:2.0.6'
+        compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
+        compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
+        compile 'com.squareup.retrofit2:retrofit:2.2.0'
+        compile 'com.squareup.retrofit2:converter-gson:2.2.0'
+        compile 'com.google.code.gson:gson:2.8.0'
+        compile 'com.orhanobut:logger:1.15'
+        compile 'com.android.support:design:25.2.0'
+        compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha8'
+        testCompile 'junit:junit:4.12'
+        annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
+
+### 描述
+
+项目采用MVP架构
+
+* View层UI布局，数据渲染，点击按钮交互等等
+* Presenter层负责M和V层的对接
+* Model层负责数据的存取
+
+### 作者
+
+* Email:YougaKingWu@gmail.com
+* QQ:451477973
