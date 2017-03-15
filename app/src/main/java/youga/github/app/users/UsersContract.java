@@ -1,5 +1,7 @@
 package youga.github.app.users;
 
+import io.reactivex.annotations.NonNull;
+
 import java.util.List;
 
 import youga.github.app.BasePresenter;
@@ -29,5 +31,7 @@ public class UsersContract {
     interface Presenter extends BasePresenter {
 
         void searchUsers(String terms);
+
+        void getRepository(@NonNull User user);
     }
 }

@@ -27,6 +27,7 @@ import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import youga.github.app.BaseActivity;
 import youga.github.app.R;
+import youga.github.app.app.service.CommonService;
 import youga.github.app.bean.User;
 import youga.github.app.other.BaseAdapter;
 
@@ -46,6 +47,8 @@ public class SearchUsersActivity extends BaseActivity implements UsersContract.V
         setContentView(R.layout.activity_search_users);
         ButterKnife.bind(this);
 
+        Intent service = new Intent(this, CommonService.class);
+        startService(service);
 
         new UsersPresenter(this);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -76,6 +79,18 @@ public class SearchUsersActivity extends BaseActivity implements UsersContract.V
             }
         });
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPresenter.subscribe();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mPresenter.unSubscribe();
     }
 
     @Override
@@ -167,7 +182,7 @@ public class SearchUsersActivity extends BaseActivity implements UsersContract.V
                 mTvLogin.setText(String.format("%s:%s", getString(R.string.user_name), user.getLogin()));
                 mTvLanguage.setText(String.format("%s:%s", getString(R.string.preference_language),
                         user.getReference_language() == null ? getString(R.string.loading) : user.getReference_language()));
-
+                if (user.getReference_language() == null) mPresenter.getRepository(user);
                 itemView.setOnClickListener(v -> {
                     Intent intent = new Intent(SearchUsersActivity.this, RepositoriesActivity.class);
                     intent.putExtra(User.class.getSimpleName(), user);

@@ -42,4 +42,7 @@ public abstract class ErrorConsumer implements Consumer<Throwable> {
             onError(e.getMessage(), false);
         }
     }
+
+
+
 }
