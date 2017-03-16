@@ -19,17 +19,14 @@ import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import youga.github.app.api.ApiClient;
 import youga.github.app.api.ApiStores;
-import youga.github.app.api.ErrorConsumer;
 import youga.github.app.app.NetworkState;
 import youga.github.app.bean.Repository;
 import youga.github.app.bean.User;
-import youga.github.app.bean.UserForm;
 
 /**
  * Created by YougaKing on 2017/3/3.
@@ -48,7 +45,6 @@ public class UsersPresenter implements UsersContract.Presenter {
         mDisposable = new CompositeDisposable();
         mView.setPresenter(this);
     }
-
 
     @Subscribe(
             thread = EventThread.MAIN_THREAD,
@@ -81,18 +77,14 @@ public class UsersPresenter implements UsersContract.Presenter {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(userForm -> {
-                    if (userForm.getItems() == null || userForm.getItems().isEmpty()) {
-                        mView.showNoUsers();
-                    } else {
-                        mView.showUsers(userForm.getItems());
-                    }
-                }, new ErrorConsumer() {
-                    @Override
-                    public void onError(String error, boolean reappear) {
-                        mView.showLoadingUsersError(error);
-                        if (reappear) searchUsers(terms);
-                    }
-                }, () -> mView.setLoadingIndicator(false)));
+                            if (userForm.getItems() == null || userForm.getItems().isEmpty()) {
+                                mView.showNoUsers();
+                            } else {
+                                mView.showUsers(userForm.getItems());
+                            }
+                        },
+                        throwable -> mView.showLoadingUsersError(throwable.getLocalizedMessage()),
+                        () -> mView.setLoadingIndicator(false)));
     }
 
     @Override
@@ -103,76 +95,28 @@ public class UsersPresenter implements UsersContract.Presenter {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(repositories -> {
-                    user.setRepositories(repositories);
-                    Map<String, Integer> map = new HashMap<>();
-                    Observable.fromIterable(repositories)
-                            .filter(repository -> repository.getLanguage() != null)
-                            .map(Repository::getLanguage)
-                            .subscribe(s -> {
-                                if (map.get(s) != null) {
-                                    map.put(s, map.get(s) + 1);
-                                } else {
-                                    map.put(s, 1);
-                                }
-                            });
-                    Observable.fromIterable(map.keySet())
-                            .scan((s, s2) -> map.get(s) > map.get(s2) ? s : s2)
-                            .lastElement()
-                            .subscribe(user::setReference_language);
-                    if (user.getRepositories().isEmpty() || user.getReference_language().isEmpty())
-                        user.setReference_language("No Repository");
-                    mView.notifyItem(user);
-                }, new ErrorConsumer() {
-                    @Override
-                    public void onError(String error, boolean reappear) {
-                        user.setReference_language("请求失败");
-                        mView.notifyItem(user);
-                    }
-                }, () -> USER_MAP.remove(user.getLogin()))
+                            user.setRepositories(repositories);
+                            Map<String, Integer> map = new HashMap<>();
+                            Observable.fromIterable(repositories)
+                                    .filter(repository -> repository.getLanguage() != null)
+                                    .map(Repository::getLanguage)
+                                    .subscribe(s -> {
+                                        if (map.get(s) != null) {
+                                            map.put(s, map.get(s) + 1);
+                                        } else {
+                                            map.put(s, 1);
+                                        }
+                                    });
+                            Observable.fromIterable(map.keySet())
+                                    .scan((s, s2) -> map.get(s) > map.get(s2) ? s : s2)
+                                    .lastElement()
+                                    .subscribe(user::setReference_language);
+                            if (user.getRepositories().isEmpty() || user.getReference_language().isEmpty())
+                                user.setReference_language("No Repository");
+                            mView.notifyItem(user);
+                            USER_MAP.remove(user.getLogin());
+                        },
+                        throwable -> mView.showLoadingUsersError(throwable.getLocalizedMessage()))
         );
-    }
-
-
-    private void getRepositories(UserForm userForm) {
-        mDisposable.add(Observable.fromIterable(userForm.getItems())
-                .filter(user -> user.getReference_language() == null)
-                .concatMap(new Function<User, ObservableSource<User>>() {
-                    @Override
-                    public ObservableSource<User> apply(@NonNull User user) throws Exception {
-                        return mApiStores.getRepositories(user.getLogin())
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .zipWith(Observable.fromCallable(() -> user), (repositories, o) -> {
-                                    user.setRepositories(repositories);
-                                    Map<String, Integer> map = new HashMap<>();
-                                    Observable.fromIterable(repositories)
-                                            .filter(repository -> repository.getLanguage() != null)
-                                            .map(Repository::getLanguage)
-                                            .subscribe(s -> {
-                                                if (map.get(s) != null) {
-                                                    map.put(s, map.get(s) + 1);
-                                                } else {
-                                                    map.put(s, 1);
-                                                }
-                                            });
-                                    Observable.fromIterable(map.keySet())
-                                            .scan((s, s2) -> map.get(s) > map.get(s2) ? s : s2)
-                                            .lastElement()
-                                            .subscribe(user::setReference_language);
-                                    return user;
-                                });
-                    }
-                }).map(user -> {
-                    if (user.getRepositories().isEmpty() || user.getReference_language().isEmpty())
-                        user.setReference_language("No Repository");
-                    return user;
-                }).subscribe(user -> mView.notifyItem(user),
-                        new ErrorConsumer() {
-                            @Override
-                            public void onError(String error, boolean reappear) {
-                                Logger.d(error);
-                                if (reappear) getRepositories(userForm);
-                            }
-                        }));
     }
 }
